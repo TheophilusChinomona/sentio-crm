@@ -8,6 +8,7 @@ on:
       - version-16
 jobs:
   release:
+    if: github.repository == 'frappe/crm'
     name: Release
     runs-on: ubuntu-latest
     timeout-minutes: 15

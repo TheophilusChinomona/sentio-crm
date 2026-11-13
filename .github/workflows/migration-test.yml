@@ -21,6 +21,7 @@ concurrency:
 
 jobs:
     setup:
+      if: github.repository == 'frappe/crm'
         name: Resolve frappe matrix
         runs-on: ubuntu-latest
         outputs:
@@ -38,6 +39,7 @@ jobs:
                   esac >> "$GITHUB_OUTPUT"
 
     migrate:
+      if: github.repository == 'frappe/crm'
         name: Upgrade base branch -> PR (frappe ${{ matrix.frappe-branch }})
         needs: setup
         runs-on: ubuntu-latest

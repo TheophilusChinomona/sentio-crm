@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   assets:
+    if: github.repository == 'frappe/crm'
     name: Pre-build assets
     uses: frappe/pilot/.github/workflows/app-assets.yml@develop
     with:
@@ -26,7 +27,7 @@ jobs:
   marketplace:
     name: Open the marketplace release PR
     needs: assets
-    if: startsWith(github.event.head_commit.message, 'chore(release):')
+    if: github.repository == 'frappe/crm' && (startsWith(github.event.head_commit.message, 'chore(release):'))
     uses: frappe/marketplace/.github/workflows/publish-release.yml@main
     with:
       app: crm

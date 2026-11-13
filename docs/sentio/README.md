@@ -35,3 +35,12 @@ Runtime integration and database isolation checks are executed by
 `.github/workflows/builds.yml`; inspect the actual run result before deployment.
 See [deployment instructions](../../deploy/README.md). Historical two-app release
 notes are kept in `first-release-notes.md` and are not current installation steps.
+
+## Inherited GitHub automation
+
+Upstream release/marketplace/review/translation bots and upstream-specific server,
+UI and migration jobs are retained for future merge comparison, but job-guarded
+to `frappe/crm`; they cannot run against or publish into Frappe from this fork.
+Sentio uses its own image/staging workflow and keeps frontend/linters available.
+Upstream backend test suites remain in source; running their ERPNext-dependent
+matrix on Sentio requires deliberate setup rather than falling back to Frappe 15.

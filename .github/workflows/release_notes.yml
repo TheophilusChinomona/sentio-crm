@@ -21,6 +21,7 @@ permissions:
 
 jobs:
   regen-notes:
+    if: github.repository == 'frappe/crm'
     name: 'Regenerate release notes'
     runs-on: ubuntu-latest
     timeout-minutes: 10

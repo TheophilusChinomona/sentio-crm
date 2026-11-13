@@ -7,6 +7,7 @@ on:
 
 jobs:
   regenerate-pot-file:
+    if: github.repository == 'frappe/crm'
     name: Regenerate POT file
     runs-on: ubuntu-latest
     timeout-minutes: 20
