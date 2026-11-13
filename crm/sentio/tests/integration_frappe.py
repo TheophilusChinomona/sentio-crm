@@ -68,3 +68,21 @@ class TestSentioSiteIntegration(FrappeTestCase):
 		self.assertEqual(doc.review_status, "hold")
 		with self.assertRaises(frappe.ValidationError):
 			review_prospect(doc.name, "test proof", True)
+
+	def test_sales_user_cannot_import_or_approve(self):
+		user = "sales-user@example.test"
+		if not frappe.db.exists("User", user):
+			frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": user,
+					"first_name": "Synthetic Sales",
+					"send_welcome_email": 0,
+					"roles": [{"role": "Sales User"}],
+				}
+			).insert(ignore_permissions=True)
+		frappe.set_user(user)
+		with self.assertRaises(frappe.PermissionError):
+			import_research("test-client", [self.record], False)
+		with self.assertRaises(frappe.PermissionError):
+			review_prospect(source_key(self.record), "unauthorised review", True)

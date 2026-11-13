@@ -20,7 +20,7 @@ record = dict(
 	verification_ref="fixture",
 	review_status="draft",
 	source_url="https://example.test/contact",
-	source_run="ci-isolation",
+	source_run="20261113T150000Z",
 	selected=True,
 	evidence=[],
 )
