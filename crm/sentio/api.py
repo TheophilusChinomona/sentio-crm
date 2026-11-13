@@ -223,7 +223,7 @@ def source_information():
 		"license": "AGPL-3.0",
 		"crm": "https://github.com/TheophilusChinomona/sentio-crm",
 		"marketing_module": "crm.sentio (included in CRM source)",
-		"note": "These repositories include build and installation instructions. Deploy an exact source revision with each release.",
+		"note": "This repository includes build and installation instructions. Deploy an exact source revision with each release.",
 	}
 
 

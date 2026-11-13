@@ -1,12 +1,12 @@
 """Run on a disposable Frappe/CRM test site, never on a customer site."""
 
 import frappe
-from frappe.tests.utils import FrappeTestCase
+from crm.tests import CRMTestCase
 from crm.sentio.api import import_research, review_prospect
 from crm.sentio.policy import source_key
 
 
-class TestSentioSiteIntegration(FrappeTestCase):
+class TestSentioSiteIntegration(CRMTestCase):
 	def setUp(self):
 		frappe.set_user("Administrator")
 		s = frappe.get_single("Sentio Marketing Settings")
