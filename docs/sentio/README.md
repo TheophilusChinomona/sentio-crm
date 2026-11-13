@@ -44,3 +44,5 @@ to `frappe/crm`; they cannot run against or publish into Frappe from this fork.
 Sentio uses its own image/staging workflow and keeps frontend/linters available.
 Upstream backend test suites remain in source; running their ERPNext-dependent
 matrix on Sentio requires deliberate setup rather than falling back to Frappe 15.
+
+See [built-in research workflow](research.md) for import and reviewer instructions.

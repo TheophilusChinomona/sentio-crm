@@ -8,6 +8,7 @@ from crm.sentio.policy import source_key
 
 class TestSentioSiteIntegration(CRMTestCase):
 	def setUp(self):
+		super().setUp()
 		frappe.set_user("Administrator")
 		s = frappe.get_single("Sentio Marketing Settings")
 		s.client_id = "test-client"
@@ -39,6 +40,7 @@ class TestSentioSiteIntegration(CRMTestCase):
 	def tearDown(self):
 		frappe.set_user("Administrator")
 		frappe.db.rollback()
+		super().tearDown()
 
 	def test_import_is_site_scoped_and_never_approves(self):
 		with self.assertRaises(frappe.PermissionError):

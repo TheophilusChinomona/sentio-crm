@@ -40,8 +40,6 @@ jobs:
           load: true
           tags: local/sentio-crm:consolidated
           build-args: SOURCE_REVISION=${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
       - name: Start disposable staging stack
         run: |
           docker network create dokploy-network
