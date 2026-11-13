@@ -1,3 +1,29 @@
+# Sentio CRM — current working baseline
+
+This is TheophilusChinomona/sentio-crm, branch sentio-v16. Read
+`docs/sentio/README.md` and `deploy/README.md` before deployment or upstream work.
+Research and reviewed outreach are built into `crm/sentio`; the separately installed
+sentio_marketing app is legacy. Root compose.yaml builds this checkout; docker/
+is upstream development scaffolding. Preserve crm app identity and migrations.
+
+Keep origin as the Sentio fork and upstream as frappe/crm. Merge selected stable
+upstream releases on update branches, test, then release; never auto-update live
+sites. Preserve upstream hooks when adding Sentio hooks. Each client has an
+isolated Frappe site/database. No client data, keys or mailbox secrets in commits.
+Production changes and sends require their own authorization and staging checks.
+
+Checks: python3 -m unittest discover -s tests_sentio;
+python3 -m unittest discover -s crm/sentio/tests;
+node --test tests_sentio/mailServers.node.mjs;
+cd frontend && yarn test:run. The GitHub Sentio image workflow also boots synthetic
+sites and checks migration, permissions and isolation before publishing an image.
+Inspect the actual run result; unit tests are not runtime validation.
+
+The following upstream context is retained for reference; its historical test
+counts are superseded by current command output.
+
+---
+
 # CRM — Project Context
 
 ## What this project is
