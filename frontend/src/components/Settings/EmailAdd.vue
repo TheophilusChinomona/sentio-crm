@@ -11,7 +11,10 @@
     </div>
     <!-- email service provider selection -->
     <div class="flex flex-wrap items-center">
-      <div
+      <button
+        type="button"
+        :aria-label="s.name"
+        :aria-pressed="selectedService?.name === s.name"
         v-for="s in services"
         :key="s.name"
         class="flex flex-col items-center gap-1 mt-4 w-[70px]"
@@ -22,9 +25,12 @@
           :logo="s.icon"
           :selected="selectedService?.name === s?.name"
         />
-      </div>
+      </button>
     </div>
-    <div v-if="selectedService" class="flex flex-col gap-4">
+    <div
+      v-if="selectedService"
+      class="flex min-h-0 flex-col gap-4 overflow-y-auto"
+    >
       <!-- email service provider info -->
       <div
         class="flex items-center gap-2 p-2 rounded-5 ring-1 ring-outline-gray-3 text-ink-gray-6"
@@ -52,6 +58,7 @@
               :name="field.name"
               :type="field.type"
               :placeholder="field.placeholder"
+              :options="field.options"
             />
           </div>
         </div>
@@ -79,13 +86,13 @@
       <Button
         :label="__('Back')"
         variant="outline"
-        :disabled="addEmailRes.loading"
+        :disabled="addEmailRes.loading || manualAddRes.loading"
         @click="emit('update:step', 'email-list')"
       />
       <Button
         :label="__('Create')"
         variant="solid"
-        :loading="addEmailRes.loading"
+        :loading="addEmailRes.loading || manualAddRes.loading"
         @click="createEmailAccount"
       />
     </div>
@@ -93,23 +100,32 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { createResource, toast } from 'frappe-ui'
 import { useTelemetry } from '@framework/ui/telemetry'
 import { useCrmOnboarding } from '@/composables/onboarding'
 import CircleAlert from '~icons/lucide/circle-alert'
 import {
   customProviderFields,
+  manualServerFields,
   popularProviderFields,
   services,
   validateInputs,
   incomingOutgoingFields,
 } from './emailConfig'
 import EmailProviderIcon from './EmailProviderIcon.vue'
+import {
+  manualProvider,
+  mailPreset,
+  validateManualMail,
+} from '../../utils/mailServers'
 
 const emit = defineEmits(['update:step'])
 
 const state = reactive({
+  ...mailPreset(),
+  zoho_region: '',
+  login_id: '',
   service: '',
   email_account_name: '',
   email_id: '',
@@ -128,12 +144,26 @@ const { completeStep } = useCrmOnboarding()
 
 const selectedService = ref(null)
 const fields = computed(() =>
-  selectedService.value.custom ? customProviderFields : popularProviderFields,
+  (manualProvider(state.service)
+    ? manualServerFields
+    : selectedService.value.custom
+      ? customProviderFields
+      : popularProviderFields
+  ).filter((field) => !field.condition || field.condition(state)),
+)
+watch(
+  () => state.zoho_region,
+  (region) => {
+    if (state.service === 'Zoho' && region)
+      Object.assign(state, mailPreset(region))
+  },
 )
 
 function handleSelect(service) {
   selectedService.value = service
   state.service = service.name
+  if (manualProvider(service.name))
+    Object.assign(state, mailPreset(), { zoho_region: '' })
 }
 
 const addEmailRes = createResource({
@@ -153,12 +183,30 @@ const addEmailRes = createResource({
   },
 })
 
+const manualAddRes = createResource({
+  url: 'crm.api.sentio_mail.save_account',
+  onSuccess: () => {
+    toast.success(__('Email account created successfully'))
+    completeStep('connect_your_email')
+    emit('update:step', 'email-list')
+  },
+  onError: () => {
+    error.value = __(
+      'Could not save mailbox. Check permissions, server details, encryption and app password.',
+    )
+  },
+})
+
 const error = ref()
 function createEmailAccount() {
-  error.value = validateInputs(state, selectedService.value.custom)
+  error.value = manualProvider(state.service)
+    ? validateManualMail(state)
+    : validateInputs(state, selectedService.value.custom)
   if (error.value) return
 
-  addEmailRes.submit({ data: state })
+  ;(manualProvider(state.service) ? manualAddRes : addEmailRes).submit({
+    data: { ...state },
+  })
   capture('email_account_created')
 }
 </script>

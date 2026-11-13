@@ -8,8 +8,8 @@
     </div>
     <div class="w-fit">
       <EmailProviderIcon
-        :logo="emailIcon[accountData.service]"
-        :label="accountData.service"
+        :logo="emailIcon[state.service]"
+        :label="state.service"
       />
     </div>
     <!-- banner for setting up email account -->
@@ -28,7 +28,7 @@
       </div>
     </div>
     <!-- fields -->
-    <div class="flex flex-col gap-4">
+    <div class="flex min-h-0 flex-col gap-4 overflow-y-auto">
       <div class="grid grid-cols-1 gap-4">
         <div
           v-for="field in fields"
@@ -41,6 +41,7 @@
             :name="field.name"
             :type="field.type"
             :placeholder="field.placeholder"
+            :options="field.options"
           />
         </div>
       </div>
@@ -82,14 +83,21 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { call, toast } from 'frappe-ui'
 import EmailProviderIcon from './EmailProviderIcon.vue'
+import {
+  manualProvider,
+  accountState,
+  mailPreset,
+  validateManualMail,
+} from '../../utils/mailServers'
 import {
   emailIcon,
   services,
   popularProviderFields,
   customProviderFields,
+  manualServerFields,
   validateInputs,
   incomingOutgoingFields,
 } from './emailConfig'
@@ -102,12 +110,16 @@ const props = defineProps({
 const emit = defineEmits(['update:step'])
 
 const state = reactive({
+  ...accountState(props.accountData),
+  zoho_region: '',
   email_account_name: props.accountData.email_account_name || '',
-  service: props.accountData.service || '',
+  service: accountState(props.accountData).service,
   email_id: props.accountData.email_id || '',
   api_key: props.accountData?.api_key || null,
   api_secret: props.accountData?.api_secret || null,
-  password: props.accountData?.password || null,
+  password: manualProvider(props.accountData.service)
+    ? ''
+    : props.accountData?.password || null,
   frappe_mail_site: props.accountData?.frappe_mail_site || '',
   enable_incoming: props.accountData.enable_incoming || false,
   enable_outgoing: props.accountData.enable_outgoing || false,
@@ -127,17 +139,47 @@ const isCustomService = computed(() => {
 })
 
 const fields = computed(() => {
+  if (manualProvider(state.service))
+    return manualServerFields.filter(
+      (field) => !field.condition || field.condition(state),
+    )
   if (isCustomService.value) {
     return customProviderFields
   }
   return popularProviderFields
 })
 
+watch(
+  () => state.zoho_region,
+  (region) => {
+    if (state.service === 'Zoho' && region)
+      Object.assign(state, mailPreset(region))
+  },
+)
 const error = ref()
 const loading = ref(false)
 async function updateAccount() {
-  error.value = validateInputs(state, isCustomService.value)
+  error.value = manualProvider(state.service)
+    ? validateManualMail(state, true)
+    : validateInputs(state, isCustomService.value)
   if (error.value) return
+  if (manualProvider(state.service)) {
+    try {
+      loading.value = true
+      await call('crm.api.sentio_mail.save_account', {
+        name: props.accountData.name || props.accountData.email_account_name,
+        data: { ...state },
+      })
+      succesHandler()
+    } catch {
+      error.value = __(
+        'Could not update mailbox. Check permissions, server details, encryption and app password.',
+      )
+    } finally {
+      loading.value = false
+    }
+    return
+  }
   const old = { ...props.accountData }
   const updatedEmailAccount = { ...state }
 

@@ -1,3 +1,4 @@
+import LogoCustomMail from '../../../public/images/mail-server.svg'
 import { validateEmail } from '../../utils'
 
 import LogoGmail from '../../../public/images/gmail.png'
@@ -97,7 +98,91 @@ export const customProviderFields = [
   },
 ]
 
+export const manualServerFields = [
+  ...fixedFields,
+  {
+    label: __(
+      'Mailbox password / app password (leave blank to keep when editing)',
+    ),
+    name: 'password',
+    type: 'password',
+  },
+  {
+    label: __('Zoho paid-business region preset (or enter your own servers)'),
+    name: 'zoho_region',
+    type: 'select',
+    condition: (s) => s.service === 'Zoho',
+    options: [
+      { label: __('Enter server details manually'), value: '' },
+      { label: __('United States'), value: 'US' },
+      { label: __('Europe'), value: 'EU' },
+    ],
+  },
+  {
+    label: __('Login username if different from email'),
+    name: 'login_id',
+    type: 'text',
+  },
+  {
+    label: __('IMAP server'),
+    name: 'email_server',
+    type: 'text',
+    condition: (s) => s.enable_incoming,
+  },
+  {
+    label: __('IMAP port'),
+    name: 'incoming_port',
+    type: 'number',
+    condition: (s) => s.enable_incoming,
+  },
+  {
+    label: __('Incoming encryption'),
+    name: 'incoming_security',
+    type: 'select',
+    options: ['SSL/TLS', 'STARTTLS'],
+    condition: (s) => s.enable_incoming,
+  },
+  {
+    label: __('SMTP server'),
+    name: 'smtp_server',
+    type: 'text',
+    condition: (s) => s.enable_outgoing,
+  },
+  {
+    label: __('SMTP port'),
+    name: 'smtp_port',
+    type: 'number',
+    condition: (s) => s.enable_outgoing,
+  },
+  {
+    label: __('Outgoing encryption'),
+    name: 'outgoing_security',
+    type: 'select',
+    options: ['SSL/TLS', 'STARTTLS'],
+    condition: (s) => s.enable_outgoing,
+  },
+]
+
 export const services = [
+  {
+    name: 'Zoho',
+    icon: LogoCustomMail,
+    info: __(
+      'Enable IMAP in Zoho and use its account-specific server details. Presets are for paid business mailboxes; edit servers for other regions or plans. Read more',
+    ),
+    link: 'https://www.zoho.com/mail/help/imap-access.html',
+    custom: false,
+  },
+  {
+    name: 'Custom IMAP/SMTP',
+    icon: LogoCustomMail,
+    info: __(
+      'Use the incoming and outgoing settings supplied by your mail host. A mailbox app password may be required. Read more',
+    ),
+    link: 'https://docs.frappe.io/crm/email-communication',
+    custom: false,
+  },
+
   {
     name: 'Frappe Mail',
     icon: LogoFrappeMail,
@@ -165,6 +250,9 @@ export const services = [
 ]
 
 export const emailIcon = {
+  Zoho: LogoCustomMail,
+  'Custom IMAP/SMTP': LogoCustomMail,
+  '': LogoCustomMail,
   GMail: LogoGmail,
   Outlook: LogoOutlook,
   Sendgrid: LogoSendgrid,
