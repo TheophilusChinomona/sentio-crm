@@ -30,6 +30,11 @@ async function getSetupRedirect(to, isAdminUser) {
 
 const routes = [
   {
+    path: '/research',
+    name: 'Research',
+    component: () => import('@/pages/SentioResearch.vue'),
+  },
+  {
     path: '/',
     name: 'Home',
   },

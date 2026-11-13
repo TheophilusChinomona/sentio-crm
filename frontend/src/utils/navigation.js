@@ -15,6 +15,7 @@ export const navigationItems = [
     route: 'Dashboard',
     desktopOnly: true,
   },
+  { label: 'Research', icon: NoteIcon, route: 'Research' },
   { label: 'Leads', icon: LeadsIcon, route: 'Leads' },
   { label: 'Deals', icon: DealsIcon, route: 'Deals' },
   { label: 'Contacts', icon: ContactsIcon, route: 'Contacts' },

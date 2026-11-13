@@ -9,7 +9,7 @@
 	},
 	"homepage": "https://frappe.io/crm",
 	"author": "Frappe Technologies Pvt. Ltd.",
-	"license": "GPL-3.0",
+	"license": "AGPL-3.0-only",
 	"bugs": {
 		"url": "https://github.com/frappe/crm/issues"
 	},

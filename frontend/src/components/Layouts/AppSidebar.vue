@@ -113,6 +113,14 @@
           </CollapsibleSection>
         </div>
 
+        <a
+          href="/source"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="px-3 py-2 text-xs text-ink-gray-6 underline underline-offset-2"
+          :title="__('Source code and licence')"
+          >{{ __('Source code') }}</a
+        >
         <div v-if="!mobile" class="mt-auto flex flex-col gap-1 pt-2">
           <div class="mb-1 flex flex-col gap-2">
             <SignupBanner
