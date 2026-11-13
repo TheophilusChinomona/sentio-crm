@@ -1,5 +1,6 @@
 import frappe
 from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
+from frappe.permissions import add_permission, update_permission_property
 
 
 def ensure_role():
@@ -50,19 +51,10 @@ def setup():
 	# Manager receives only the CRM entity permissions needed for reviewed imports/promotion.
 	for dt in ["CRM Organization", "CRM Lead"]:
 		if not frappe.db.exists("Custom DocPerm", {"parent": dt, "role": "Sentio Marketing Manager"}):
-			frappe.get_doc(
-				{
-					"doctype": "Custom DocPerm",
-					"parent": dt,
-					"parenttype": "DocType",
-					"parentfield": "permissions",
-					"role": "Sentio Marketing Manager",
-					"read": 1,
-					"write": 1,
-					"create": 1,
-					"permlevel": 0,
-				}
-			).insert(ignore_permissions=True)
+			# Native helper copies standard DocPerm rows before creating the first custom rule.
+			add_permission(dt, "Sentio Marketing Manager", 0)
+			for permission in ("read", "write", "create"):
+				update_permission_property(dt, "Sentio Marketing Manager", 0, permission, 1)
 	frappe.clear_cache()
 
 

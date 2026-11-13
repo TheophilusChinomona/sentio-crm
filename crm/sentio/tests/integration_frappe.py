@@ -88,3 +88,28 @@ class TestSentioSiteIntegration(CRMTestCase):
 			import_research("test-client", [self.record], False)
 		with self.assertRaises(frappe.PermissionError):
 			review_prospect(source_key(self.record), "unauthorised review", True)
+
+	def test_standard_crm_permissions_survive_sentio_setup(self):
+		from crm.sentio.install import setup
+
+		setup()
+		for doctype in ("CRM Lead", "CRM Organization"):
+			standard = frappe.get_all(
+				"DocPerm",
+				filters={"parent": doctype},
+				fields=["role", "permlevel", "if_owner", "read", "write", "create"],
+			)
+			actual = frappe.get_meta(doctype, cached=False).permissions
+			for rule in standard:
+				matching = [
+					row
+					for row in actual
+					if (row.role, row.permlevel, row.if_owner) == (rule.role, rule.permlevel, rule.if_owner)
+				]
+				self.assertTrue(matching, f"Missing baseline permission for {doctype}: {rule.role}")
+				for action in ("read", "write", "create"):
+					if rule.get(action):
+						self.assertTrue(
+							any(row.get(action) for row in matching),
+							f"Lost {action} for {doctype}: {rule.role}",
+						)

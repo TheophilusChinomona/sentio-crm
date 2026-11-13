@@ -20,9 +20,15 @@ Actions builds and boots disposable test sites before publishing an image.
 Upstream policy: keep upstream remote, merge chosen stable releases on update branches;
 rerun Sentio and upstream tests before releasing. No automatic production update.
 
-Local verification: 358 frontend tests, 13 Python mail/consolidation tests,
+Local verification: 358 frontend tests, 14 Python mail/consolidation/startup tests,
 16 marketing policy/adapter tests, 5 Node mail tests. Both Compose variants parse;
 all 12 GitHub workflow YAML files parse. Real image/staging validation is tracked
 by the Sentio GitHub Actions run; its current result must be checked independently.
 The first real image build found a Research template compilation bug; the fix has
 a regression test that failed before the correction and passed afterward.
+
+Independent review found two issues, both corrected: native Frappe permission
+helpers now preserve standard CRM permissions; configurator initializes shared
+assets once and runtime entrypoints do not mutate them. Tests cover baseline
+DocPerm preservation and 16 concurrent runtime entrypoints. Reviewer rechecked
+both fixes and reported no remaining blocker in those changes.

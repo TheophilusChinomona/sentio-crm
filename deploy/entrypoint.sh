@@ -1,14 +1,10 @@
-#!/bin/bash
-set -e
-
+#!/usr/bin/env bash
+set -euo pipefail
 umask 0002
-
-ASSETS_PATH="/home/frappe/frappe-bench/sites/assets"
-BAKED_PATH="/home/frappe/frappe-bench/assets"
-
-echo "Linking fresh assets to volume..."
-rm -rf "$ASSETS_PATH"
-mkdir -p "$(dirname "$ASSETS_PATH")"
-ln -s "$BAKED_PATH" "$ASSETS_PATH"
-
+# Shared sites/assets is initialized once by configurator before runtime services.
+# Runtime containers must never concurrently remove/recreate this shared link.
+if [[ ! -L /home/frappe/frappe-bench/sites/assets ]] || [[ ! -d /home/frappe/frappe-bench/sites/assets ]]; then
+  echo 'Assets are not configured. Run the Compose configurator service first.' >&2
+  exit 1
+fi
 exec "$@"
