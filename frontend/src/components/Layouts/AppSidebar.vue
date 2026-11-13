@@ -399,6 +399,14 @@ function toggleHelpModal() {
   minimize.value = !showHelpModal.value
 }
 
+// Keep the research workspace clear on arrival. Users can still open help explicitly.
+watch(
+  () => route.name,
+  (name) => {
+    if (name === 'Research') showHelpModal.value = false
+  },
+)
+
 // onboarding
 const { user } = sessionStore()
 const { users, isManager } = usersStore()
@@ -608,6 +616,7 @@ onMounted(async () => {
   // newly introduced steps, preserves completion). No-op when already aligned.
   await reconcileOnboarding(filteredSteps)
   setUp(filteredSteps)
+  if (route.name === 'Research') showHelpModal.value = false
   flushPendingSteps()
 })
 
