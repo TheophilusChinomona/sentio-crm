@@ -1,0 +1,12 @@
+.git
+**/node_modules
+**/__pycache__
+**/.ruff_cache
+.env
+.env.*
+!.env.example
+**/*.pyc
+crm/public/frontend
+crm/www/crm.html
+dist
+.tests-temp

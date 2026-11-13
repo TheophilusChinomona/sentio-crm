@@ -1,3 +1,21 @@
+# Sentio CRM
+
+A maintained Frappe CRM fork with built-in research, contact verification records,
+reviewed outreach controls, and Zoho/custom IMAP/SMTP support. One application,
+one source repository, one deployable image. GNU AGPL version 3.
+
+**Deploy from your GitHub:** [deployment guide](deploy/README.md).
+Use root `compose.yaml` with Dokploy's GitHub Compose source. Configure the four
+values in `.env.example`; no separate marketing app or JSON app manifest is needed.
+
+**Upstream updates:** [maintenance policy](docs/sentio/README.md).
+Production changes remain subject to staging validation and backup.
+
+The upstream project documentation is retained below for reference. Its `docker/`
+folder is a development setup; use the root Compose for Sentio deployments.
+
+---
+
 <div align="center" markdown="1">
 
 <a href="https://frappe.io/products/crm">

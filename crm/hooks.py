@@ -486,3 +486,13 @@ standard_dropdown_items = [
 		"is_standard": 1,
 	},
 ]
+
+# Sentio additions live outside upstream feature modules for easier upstream merges.
+from crm.sentio.hooks import merge_events as _sentio_merge_events
+
+doc_events = _sentio_merge_events(doc_events)
+before_install = [before_install, "crm.sentio.install.ensure_role"]
+after_install.append("crm.sentio.install.setup")
+after_migrate.append("crm.sentio.install.setup")
+before_migrate = ["crm.sentio.install.check_legacy_app"]
+extend_doctype_class["Email Queue"] = ["crm.sentio.outbound.ReviewedQueueMixin"]

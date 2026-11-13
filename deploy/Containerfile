@@ -1,0 +1,41 @@
+# syntax=docker/dockerfile:1
+# Runtime scripts adapted from frappe/frappe_docker, revision
+# 85ad653360e4670c2e885c4283d293e7b9efeda9 (see FRAPPE-DOCKER-LICENSE).
+FROM frappe/build:version-16@sha256:580cbfae5e4f9b50980994829e79449b46d20d20ad6d68521b8f7858490cc637 AS builder
+USER frappe
+# Deliberately pinned Framework revision. Upgrades require changing and testing this pin.
+RUN git clone --no-checkout https://github.com/frappe/frappe /home/frappe/framework-source && \
+    git -C /home/frappe/framework-source checkout -b sentio-framework 49789a1711d4dde2be9c6888efe35651465f4b64 && \
+    bench init --frappe-path=file:///home/frappe/framework-source \
+      --frappe-branch=sentio-framework --no-procfile --no-backups \
+      --skip-redis-config-generation /home/frappe/frappe-bench
+WORKDIR /home/frappe/frappe-bench
+# Build precisely the checkout supplied by GitHub/Dokploy, never a second CRM clone.
+COPY --chown=frappe:0 . /home/frappe/frappe-bench/apps/crm
+RUN bench pip install --editable apps/crm && \
+    printf 'frappe\ncrm\n' > sites/apps.txt && \
+    bench setup requirements --node && \
+    bench build --app crm && \
+    env/bin/python -c "import crm, crm.sentio.api; print('Verified consolidated Sentio CRM')" && \
+    test -f apps/crm/crm/www/crm.html && \
+    echo '{}' > sites/common_site_config.json && \
+    find apps -mindepth 1 -type d -name .git -prune -exec rm -rf {} + && \
+    chmod -R g=u /home/frappe/frappe-bench
+
+FROM frappe/base:version-16@sha256:5c736d38fc4fc118831e90a1e4f424b127d47665bf4ce280cbe0c331c4f24943 AS runtime
+ARG SOURCE_REVISION=local
+LABEL org.opencontainers.image.source="https://github.com/TheophilusChinomona/sentio-crm" \
+      org.opencontainers.image.revision="${SOURCE_REVISION}" \
+      org.opencontainers.image.licenses="AGPL-3.0-only"
+COPY --from=builder --chown=frappe:0 /home/frappe/frappe-bench /home/frappe/frappe-bench
+WORKDIR /home/frappe/frappe-bench
+USER frappe
+RUN cp -r sites/assets assets && rm -rf sites/assets && chmod g=u .
+USER root
+COPY deploy/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY deploy/start.sh /usr/local/bin/start.sh
+RUN chmod 755 /usr/local/bin/entrypoint.sh /usr/local/bin/start.sh
+USER frappe
+VOLUME ["/home/frappe/frappe-bench/sites", "/home/frappe/frappe-bench/logs"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["start.sh"]

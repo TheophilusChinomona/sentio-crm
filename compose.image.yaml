@@ -1,0 +1,190 @@
+services:
+  db:
+    image: mariadb:11.8
+    restart: unless-stopped
+    command:
+    - --character-set-server=utf8mb4
+    - --collation-server=utf8mb4_unicode_ci
+    - --skip-character-set-client-handshake
+    - --innodb-snapshot-isolation=OFF
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in Dokploy Environment}
+    volumes:
+    - database:/var/lib/mysql
+    networks:
+    - application
+    healthcheck:
+      test:
+      - CMD
+      - healthcheck.sh
+      - --connect
+      - --innodb_initialized
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+  redis-cache:
+    image: redis:8.6-alpine
+    restart: unless-stopped
+    networks:
+    - application
+    healthcheck:
+      test:
+      - CMD
+      - redis-cli
+      - ping
+      interval: 10s
+      timeout: 3s
+      retries: 20
+  redis-queue:
+    image: redis:8.6-alpine
+    restart: unless-stopped
+    command:
+    - redis-server
+    - --appendonly
+    - 'yes'
+    volumes:
+    - queue:/data
+    networks:
+    - application
+    healthcheck:
+      test:
+      - CMD
+      - redis-cli
+      - ping
+      interval: 10s
+      timeout: 3s
+      retries: 20
+  configurator:
+    image: ${SENTIO_IMAGE:?Set a tested Sentio image tag or digest}
+    platform: linux/amd64
+    restart: 'no'
+    volumes: &id001
+    - sites:/home/frappe/frappe-bench/sites
+    - logs:/home/frappe/frappe-bench/logs
+    networks: &id002
+    - application
+    entrypoint:
+    - bash
+    command:
+    - apps/crm/deploy/configurator.sh
+    depends_on:
+      db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      redis-queue:
+        condition: service_healthy
+    working_dir: /home/frappe/frappe-bench
+    pull_policy: always
+  create-site:
+    image: ${SENTIO_IMAGE:?Set a tested Sentio image tag or digest}
+    platform: linux/amd64
+    restart: 'no'
+    volumes: *id001
+    networks: *id002
+    entrypoint:
+    - bash
+    environment:
+      CRM_SITE: ${CRM_SITE:?Set the CRM hostname, without https://}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD}
+      CRM_ADMIN_PASSWORD: ${CRM_ADMIN_PASSWORD:?Set CRM_ADMIN_PASSWORD}
+      SENTIO_CLIENT_ID: ${SENTIO_CLIENT_ID:?Choose the client for this isolated site}
+    command:
+    - apps/crm/deploy/create-site.sh
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
+    pull_policy: always
+  backend:
+    image: ${SENTIO_IMAGE:?Set a tested Sentio image tag or digest}
+    platform: linux/amd64
+    restart: unless-stopped
+    volumes: *id001
+    networks: *id002
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
+    pull_policy: always
+  websocket:
+    image: ${SENTIO_IMAGE:?Set a tested Sentio image tag or digest}
+    platform: linux/amd64
+    restart: unless-stopped
+    volumes: *id001
+    networks: *id002
+    command:
+    - node
+    - /home/frappe/frappe-bench/apps/frappe/socketio.js
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
+    pull_policy: always
+  worker:
+    image: ${SENTIO_IMAGE:?Set a tested Sentio image tag or digest}
+    platform: linux/amd64
+    restart: unless-stopped
+    volumes: *id001
+    networks: *id002
+    command:
+    - bench
+    - worker
+    - --queue
+    - short,default,long
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
+    pull_policy: always
+  scheduler:
+    image: ${SENTIO_IMAGE:?Set a tested Sentio image tag or digest}
+    platform: linux/amd64
+    restart: unless-stopped
+    volumes: *id001
+    networks: *id002
+    command:
+    - bench
+    - schedule
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+    working_dir: /home/frappe/frappe-bench
+    pull_policy: always
+  frontend:
+    image: ${SENTIO_IMAGE:?Set a tested Sentio image tag or digest}
+    platform: linux/amd64
+    restart: unless-stopped
+    volumes: *id001
+    networks:
+    - application
+    - dokploy-network
+    command:
+    - nginx-entrypoint.sh
+    environment:
+      BACKEND: backend:8000
+      SOCKETIO: websocket:9000
+      FRAPPE_SITE_NAME_HEADER: ${CRM_SITE:?Set CRM_SITE}
+      NGINX_LISTEN_PORT: '8080'
+      CLIENT_MAX_BODY_SIZE: 50m
+      PROXY_READ_TIMEOUT: '120'
+    expose:
+    - '8080'
+    depends_on:
+      backend:
+        condition: service_started
+      websocket:
+        condition: service_started
+    working_dir: /home/frappe/frappe-bench
+    pull_policy: always
+volumes:
+  sites: {}
+  logs: {}
+  database: {}
+  queue: {}
+networks:
+  application:
+    driver: bridge
+  dokploy-network:
+    external: true
