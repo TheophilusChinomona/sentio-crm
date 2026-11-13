@@ -36,10 +36,7 @@
           id="verification-filter"
           v-model="status"
           class="rounded border border-outline-gray-2 px-3 py-2 text-sm"
-          @change="
-            page = 0
-            load()
-          "
+          @change="resetPage"
         >
           <option value="">{{ __('All results') }}</option>
           <option v-for="s in statuses" :key="s" :value="s">{{ s }}</option>
@@ -48,7 +45,7 @@
       <p v-if="records.error" role="alert" class="py-4 text-sm text-ink-red-5">
         {{
           __(
-            'Research could not be loaded. Ask your site administrator to check that Sentio Marketing is installed and your role has access.',
+            'Research could not be loaded. Ask your site administrator to check research setup and your role permissions.',
           )
         }}
       </p>
@@ -112,10 +109,7 @@
         <Button
           :label="__('Previous')"
           :disabled="page === 0 || records.loading"
-          @click="
-            page--
-            load()
-          "
+          @click="changePage(-1)"
         />
         <span class="text-sm text-ink-gray-6"
           >{{ __('Page') }} {{ page + 1 }}</span
@@ -123,10 +117,7 @@
         <Button
           :label="__('Next')"
           :disabled="rows.length < 50 || records.loading"
-          @click="
-            page++
-            load()
-          "
+          @click="changePage(1)"
         />
       </div>
     </div>
@@ -149,6 +140,14 @@ const status = ref('')
 const page = ref(0)
 const records = createResource({ url: 'frappe.client.get_list', auto: false })
 const rows = computed(() => records.data || [])
+function resetPage() {
+  page.value = 0
+  load()
+}
+function changePage(direction) {
+  page.value += direction
+  load()
+}
 function load() {
   records.submit({
     doctype: 'Sentio Prospect',

@@ -3,7 +3,7 @@
 set -euo pipefail
 [[ "${CRM_SITE:-}" == 'sentio.localhost' ]] || { echo 'Refusing non-CI site'; exit 1; }
 for route in /crm /source; do
-  curl --fail --retry 60 --retry-delay 5 --retry-all-errors --max-time 10 \
+  curl --location --fail --retry 60 --retry-delay 5 --retry-all-errors --max-time 10 \
     -H 'Host: sentio.localhost' "http://127.0.0.1:18080$route" -o /tmp/sentio-response
   test -s /tmp/sentio-response
 done

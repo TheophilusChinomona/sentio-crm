@@ -15,6 +15,7 @@ COPY --chown=frappe:0 . /home/frappe/frappe-bench/apps/crm
 RUN bench pip install --editable apps/crm && \
     printf 'frappe\ncrm\n' > sites/apps.txt && \
     bench setup requirements --node && \
+    (cd apps/crm/frontend && yarn test:run) && \
     bench build --app crm && \
     env/bin/python -c "import crm, crm.sentio.api; print('Verified consolidated Sentio CRM')" && \
     test -f apps/crm/crm/www/crm.html && \
