@@ -25,7 +25,7 @@ record = dict(
 	evidence=[],
 )
 for site in ("sentio.localhost", "other.localhost"):
-	frappe.init(site=site, sites_path="sites")
+	frappe.init(site=site, sites_path=".")
 	frappe.connect()
 	try:
 		frappe.set_user("Administrator")

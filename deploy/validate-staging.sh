@@ -28,4 +28,4 @@ docker compose exec -T backend bench new-site other.localhost \
   --admin-password "$CRM_ADMIN_PASSWORD" --mariadb-user-host-login-scope='%' --install-app crm
 docker compose exec -T backend bench --site other.localhost execute crm.sentio.install.configure_site \
   --kwargs '{"client_id":"other-client"}'
-docker compose exec -T backend env/bin/python apps/crm/deploy/check-isolation.py
+docker compose exec -T --workdir /home/frappe/frappe-bench/sites backend ../env/bin/python ../apps/crm/deploy/check-isolation.py
