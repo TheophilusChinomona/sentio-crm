@@ -40,7 +40,7 @@ concurrency:
 
 jobs:
     setup:
-      if: github.repository == 'frappe/crm'
+        if: github.repository == 'frappe/crm'
         name: Resolve frappe matrix
         runs-on: ubuntu-latest
         outputs:
@@ -59,7 +59,7 @@ jobs:
                   esac >> "$GITHUB_OUTPUT"
 
     test:
-      if: github.repository == 'frappe/crm'
+        if: github.repository == 'frappe/crm'
         name: Tests (frappe ${{ matrix.frappe-branch }})
         needs: setup
         runs-on: ubuntu-latest
