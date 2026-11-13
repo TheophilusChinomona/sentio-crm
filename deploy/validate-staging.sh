@@ -1,10 +1,21 @@
 #!/usr/bin/env bash
 # Disposable CI sites only. Never invoke against a customer deployment.
 set -euo pipefail
+umask 077
 [[ "${CRM_SITE:-}" == 'sentio.localhost' ]] || { echo 'Refusing non-CI site'; exit 1; }
-for route in /crm /source; do
-  curl --location --fail --retry 60 --retry-delay 5 --retry-all-errors --max-time 10 \
-    -H 'Host: sentio.localhost' "http://127.0.0.1:18080$route" -o /tmp/sentio-response
+# Public source page proves routing/readiness without treating an auth rejection as an outage.
+curl --fail --retry 30 --retry-delay 3 --retry-all-errors --max-time 10 \
+  -H 'Host: sentio.localhost' http://127.0.0.1:18080/source -o /tmp/sentio-response
+grep -q 'Sentio CRM source code' /tmp/sentio-response
+# Check the actual protected CRM page with the synthetic administrator session.
+curl --fail --max-time 30 -c /tmp/sentio-cookies \
+  -H 'Host: sentio.localhost' --data-urlencode 'usr=Administrator' \
+  --data-urlencode "pwd=$CRM_ADMIN_PASSWORD" http://127.0.0.1:18080/api/method/login \
+  -o /tmp/sentio-login
+python3 -c 'import json; assert json.load(open("/tmp/sentio-login"))["message"] == "Logged In"'
+for route in /crm /crm/research; do
+  curl --fail --max-time 30 -b /tmp/sentio-cookies -H 'Host: sentio.localhost' \
+    "http://127.0.0.1:18080$route" -o /tmp/sentio-response
   test -s /tmp/sentio-response
 done
 docker compose exec -T backend bench --site sentio.localhost set-config allow_tests true
